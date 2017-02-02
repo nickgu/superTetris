@@ -7,12 +7,248 @@
 //
 
 import UIKit
+import SpriteKit
+
+
+class MultiLineNode : SKNode {
+    var lineCount = 5
+    var fontSize = 20.0
+    var lines : [String] = []
+    var lineLabels : [SKLabelNode] = []
+    
+    func create(lineCount: Int=5, fontSize: Double=20.0) {
+        self.lineCount = lineCount
+        
+        for i in 1...self.lineCount {
+            let line = SKLabelNode()
+            let y = CGFloat( Double(-i) * (self.fontSize+3))
+            line.position = CGPoint(x: 10, y: y)
+            line.fontSize = CGFloat(self.fontSize)
+            line.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+            line.text = "info\(i): \(y)"
+            self.lineLabels.append(line)
+            self.addChild(line)
+        }
+    }
+    
+    func appendLog(line: String) {
+        self.lines.append(line)
+        if self.lines.count > self.lineCount {
+            self.lines.remove(at: 0)
+        }
+        for i in 0..<self.lines.count {
+            self.lineLabels[i].text = self.lines[i]
+        }
+    }
+}
+
+class DeviceManager {
+    var screenWidth : CGFloat = -1
+    var screenHeight : CGFloat = -1
+    
+    func attachDevice(_ viewSize: CGSize) {
+        self.screenHeight = viewSize.height
+        self.screenWidth = viewSize.width
+    }
+    
+    func widthRatio(_ ratio:Float) -> CGFloat {
+        return CGFloat(ratio) * self.screenWidth
+    }
+    
+    func heightRatio(_ ratio:Float) -> CGFloat {
+        return CGFloat(ratio) * self.screenHeight
+    }
+}
+var g_globalDevice: DeviceManager = DeviceManager()
+
+
+class LeftButton : SKShapeNode {
+    var board : RussianBlockGameBoard?
+    var log : MultiLineNode?
+    
+    func create(board: RussianBlockGameBoard, console: MultiLineNode) {
+        self.isUserInteractionEnabled = true
+        self.board = board
+        self.log = console
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.board!.left()
+        log?.appendLog(line: "OP: left.")
+    }
+}
+
+class RightButton : SKShapeNode {
+    var board : RussianBlockGameBoard?
+    var log : MultiLineNode?
+    
+    func create(board: RussianBlockGameBoard, console: MultiLineNode) {
+        self.isUserInteractionEnabled = true
+        self.board = board
+        self.log = console
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.board!.right()
+        log?.appendLog(line: "OP: right.")
+    }
+}
+
+
+class RotateButton : SKShapeNode {
+    var board : RussianBlockGameBoard?
+    var log : MultiLineNode?
+    
+    func create(board: RussianBlockGameBoard, console: MultiLineNode) {
+        self.isUserInteractionEnabled = true
+        self.board = board
+        self.log = console
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.board!.rotate()
+        log?.appendLog(line: "OP: rotate.")
+    }
+}
+
+class GameScene : SKScene {
+    var board : RussianBlockGameBoard?
+    var timer : Timer?
+    var log : MultiLineNode = MultiLineNode()
+    var score_label : SKLabelNode?
+    var blocks : [[SKShapeNode]] = []
+    
+    override func didMove(to view: SKView) {
+        // present russian blocks' main node and next-block-node.
+        
+        self.log.position = CGPoint(x: 20, y: 400)
+        self.log.create(lineCount: 10, fontSize: 30.0)
+        self.addChild(self.log)
+        
+        self.board = RussianBlockGameBoard(width: 10, height: 20)
+        self.timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: update)
+
+        let center = CGPoint(
+            x: (self.view?.bounds.width)!/2,
+            y: (self.view?.bounds.height)!/2
+        )
+        //let screen_width = (self.view?.bounds.width)!
+        let screen_height = (self.view?.bounds.height)!
+        
+        if let board = self.board {
+            let leftButton = LeftButton(circleOfRadius: 30.0)
+            leftButton.create(board: board, console: self.log)
+            leftButton.position = CGPoint(x: 150, y: 500)
+            leftButton.fillColor = UIColor.cyan
+            self.addChild(leftButton)
+            
+            let rightButton = RightButton(circleOfRadius: 30.0)
+            rightButton.create(board: board, console: self.log)
+            rightButton.position = CGPoint(x: 250, y: 500)
+            rightButton.fillColor = UIColor.cyan
+            self.addChild(rightButton)
+            
+            let rotateButton = RotateButton(circleOfRadius: 30.0)
+            rotateButton.create(board: board, console: self.log)
+            rotateButton.position = CGPoint(x: 350, y: 500)
+            rotateButton.fillColor = UIColor.cyan
+            self.addChild(rotateButton)
+            
+            self.score_label = SKLabelNode(text: "(scores here)")
+            if let score_label = self.score_label {
+                score_label.fontSize = 20.0
+                score_label.horizontalAlignmentMode = .center
+                score_label.position = CGPoint(x: center.x-20, y: screen_height * 0.8)
+                self.addChild(score_label)
+            }
+        }
+        
+        prepareBoard(board: (self.board?.board)!)
+    }
+    
+    func update(timer: Timer) {
+        if let ret = self.board?.one_step() {
+            self.log.appendLog(line: String(format: "Status:%d KilledLine(s) %d total:%d",
+                                            ret.Status.rawValue,
+                                            ret.KilledLines,
+                                            ret.TotalCount))
+            
+            self.updateBoard(board: (self.board?.board)!)
+            
+        } else {
+            self.log.appendLog(line: "bad returns.")
+        }
+    }
+    
+    func prepareBoard(board: [[Int]]) {
+        let height = board.count
+        let width = board[0].count
+        self.blocks = []
+        
+        
+        let leftBottom = CGPoint(
+            x: g_globalDevice.widthRatio(0.25),
+            y: g_globalDevice.heightRatio(0.3)
+        )
+        
+        let widthBoarderSize = g_globalDevice.widthRatio(0.5 / Float(board[0].count) / 11.0)
+        let heightBoarderSize = g_globalDevice.heightRatio(0.5 / Float(board.count) / 11.0)
+        
+        let blockSize = CGSize(
+            width: g_globalDevice.widthRatio(0.5 / Float(board[0].count) * 10.0 / 11.0),
+            height: g_globalDevice.heightRatio(0.5 / Float(board.count) * 10.0 / 11.0)
+        )
+        
+        for i in 0..<height {
+            var row : [SKShapeNode] = []
+            for j in 0..<width {
+                let origin = CGPoint(
+                    x: CGFloat(j)*(blockSize.width + widthBoarderSize) + CGFloat(leftBottom.x),
+                    y: CGFloat(i)*(blockSize.height + heightBoarderSize) + CGFloat(leftBottom.y)
+                )
+                let b = SKShapeNode(
+                    rect: CGRect(origin: origin, size: blockSize),
+                    cornerRadius: widthBoarderSize
+                )
+                b.fillColor = UIColor.white
+                b.isHidden = true
+                row.append(b)
+                self.addChild(b)
+            }
+            self.blocks.append(row)
+        }
+    }
+    
+    func updateBoard(board: [[Int]]) {
+        let height = board.count
+        let width = board[0].count
+        
+        self.score_label?.text = String(format: "%d", self.board!.score)
+        
+        for i in 0..<height {
+            for j in 0..<width {
+                if board[i][j] != 0 {
+                    self.blocks[i][j].isHidden = false
+                } else {
+                    self.blocks[i][j].isHidden = true
+                }
+            }
+        }
+    }
+}
 
 class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        let view = self.view as! SKView
+        g_globalDevice.attachDevice(self.view.bounds.size)
+        
+        let scene = GameScene(size: self.view.bounds.size)
+        scene.backgroundColor = UIColor.black
+        view.presentScene(scene)
     }
 
     override func didReceiveMemoryWarning() {

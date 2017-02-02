@@ -14,6 +14,8 @@
 		499134111E3CA997009FD385 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4991340F1E3CA997009FD385 /* LaunchScreen.storyboard */; };
 		4991341C1E3CA997009FD385 /* superRussianBlocksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4991341B1E3CA997009FD385 /* superRussianBlocksTests.swift */; };
 		499134271E3CA997009FD385 /* superRussianBlocksUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 499134261E3CA997009FD385 /* superRussianBlocksUITests.swift */; };
+		499134361E3CA9CE009FD385 /* SpriteKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499134351E3CA9CE009FD385 /* SpriteKit.framework */; };
+		4991343A1E3CACC5009FD385 /* RussianBlockGameBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 499134391E3CACC5009FD385 /* RussianBlockGameBoard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +49,8 @@
 		499134221E3CA997009FD385 /* superRussianBlocksUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = superRussianBlocksUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		499134261E3CA997009FD385 /* superRussianBlocksUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = superRussianBlocksUITests.swift; sourceTree = "<group>"; };
 		499134281E3CA997009FD385 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		499134351E3CA9CE009FD385 /* SpriteKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SpriteKit.framework; path = System/Library/Frameworks/SpriteKit.framework; sourceTree = SDKROOT; };
+		499134391E3CACC5009FD385 /* RussianBlockGameBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RussianBlockGameBoard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				499134361E3CA9CE009FD385 /* SpriteKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +86,7 @@
 				4991341A1E3CA997009FD385 /* superRussianBlocksTests */,
 				499134251E3CA997009FD385 /* superRussianBlocksUITests */,
 				499134041E3CA997009FD385 /* Products */,
+				499134341E3CA9CE009FD385 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -97,6 +103,7 @@
 		499134051E3CA997009FD385 /* superRussianBlocks */ = {
 			isa = PBXGroup;
 			children = (
+				499134391E3CACC5009FD385 /* RussianBlockGameBoard.swift */,
 				499134061E3CA997009FD385 /* AppDelegate.swift */,
 				499134081E3CA997009FD385 /* ViewController.swift */,
 				4991340A1E3CA997009FD385 /* Main.storyboard */,
@@ -123,6 +130,14 @@
 				499134281E3CA997009FD385 /* Info.plist */,
 			);
 			path = superRussianBlocksUITests;
+			sourceTree = "<group>";
+		};
+		499134341E3CA9CE009FD385 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				499134351E3CA9CE009FD385 /* SpriteKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -260,6 +275,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				499134091E3CA997009FD385 /* ViewController.swift in Sources */,
+				4991343A1E3CACC5009FD385 /* RussianBlockGameBoard.swift in Sources */,
 				499134071E3CA997009FD385 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
