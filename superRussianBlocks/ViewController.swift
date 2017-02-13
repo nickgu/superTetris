@@ -111,6 +111,22 @@ class RotateButton : SKShapeNode {
     }
 }
 
+class PauseButton : SKShapeNode {
+    var board : RussianBlockGameBoard?
+    var log : MultiLineNode?
+    
+    func create(board: RussianBlockGameBoard, console: MultiLineNode) {
+        self.isUserInteractionEnabled = true
+        self.board = board
+        self.log = console
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.board!.togglePause()
+        log?.appendLog(line: "OP: pause.")
+    }
+}
+
 class GameScene : SKScene {
     var board : RussianBlockGameBoard?
     var timer : Timer?
@@ -128,37 +144,55 @@ class GameScene : SKScene {
         self.board = RussianBlockGameBoard(width: 10, height: 20)
         self.timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: update)
 
-        let center = CGPoint(
-            x: (self.view?.bounds.width)!/2,
-            y: (self.view?.bounds.height)!/2
-        )
-        //let screen_width = (self.view?.bounds.width)!
-        let screen_height = (self.view?.bounds.height)!
-        
+        let buttonRadius = g_globalDevice.widthRatio(0.18 / 2.0)
         if let board = self.board {
-            let leftButton = LeftButton(circleOfRadius: 30.0)
+            let leftButton = LeftButton(circleOfRadius: buttonRadius)
             leftButton.create(board: board, console: self.log)
-            leftButton.position = CGPoint(x: 150, y: 500)
-            leftButton.fillColor = UIColor.cyan
+            leftButton.position = CGPoint(
+                x: g_globalDevice.widthRatio(0.225),
+                y: g_globalDevice.heightRatio(0.2))
+            leftButton.fillColor = UIColor.white
             self.addChild(leftButton)
             
-            let rightButton = RightButton(circleOfRadius: 30.0)
+            let rightButton = RightButton(circleOfRadius: buttonRadius)
             rightButton.create(board: board, console: self.log)
-            rightButton.position = CGPoint(x: 250, y: 500)
-            rightButton.fillColor = UIColor.cyan
+            rightButton.position = CGPoint(
+                x: g_globalDevice.widthRatio(1.0 - 0.225),
+                y: g_globalDevice.heightRatio(0.2))
+            rightButton.fillColor = UIColor.white
             self.addChild(rightButton)
             
-            let rotateButton = RotateButton(circleOfRadius: 30.0)
+            let rotateButton = RotateButton(circleOfRadius: buttonRadius)
             rotateButton.create(board: board, console: self.log)
-            rotateButton.position = CGPoint(x: 350, y: 500)
-            rotateButton.fillColor = UIColor.cyan
+            rotateButton.position = CGPoint(
+                x: g_globalDevice.widthRatio(0.5),
+                y: g_globalDevice.heightRatio(0.2))
+            rotateButton.fillColor = UIColor.white
             self.addChild(rotateButton)
             
+            let pauseButton = PauseButton(circleOfRadius: buttonRadius)
+            pauseButton.create(board: board, console: self.log)
+            pauseButton.position = CGPoint(
+                x: g_globalDevice.widthRatio(0.1),
+                y: g_globalDevice.heightRatio(0.85))
+            pauseButton.fillColor = UIColor.white
+            self.addChild(pauseButton)
+            
+            /*
+            let alphaScreen = SKShapeNode(rect: (self.view?.bounds)!)
+            alphaScreen.fillColor = UIColor.black
+            alphaScreen.alpha = CGFloat(0.1)
+            self.addChild(alphaScreen)
+            */
             self.score_label = SKLabelNode(text: "(scores here)")
             if let score_label = self.score_label {
-                score_label.fontSize = 20.0
+                score_label.fontSize = g_globalDevice.heightRatio(0.1)
+                
                 score_label.horizontalAlignmentMode = .center
-                score_label.position = CGPoint(x: center.x-20, y: screen_height * 0.8)
+                score_label.position = CGPoint(
+                    x: g_globalDevice.widthRatio(0.5),
+                    y: g_globalDevice.heightRatio(0.85)
+                )
                 self.addChild(score_label)
             }
         }
@@ -180,7 +214,7 @@ class GameScene : SKScene {
         }
     }
     
-    func prepareBoard(board: [[Int]]) {
+    func prepareBoard(board: [[RussianBlocksColors]]) {
         let height = board.count
         let width = board[0].count
         self.blocks = []
@@ -219,7 +253,7 @@ class GameScene : SKScene {
         }
     }
     
-    func updateBoard(board: [[Int]]) {
+    func updateBoard(board: [[RussianBlocksColors]]) {
         let height = board.count
         let width = board[0].count
         
@@ -227,8 +261,26 @@ class GameScene : SKScene {
         
         for i in 0..<height {
             for j in 0..<width {
-                if board[i][j] != 0 {
+                if board[i][j] != RussianBlocksColors.Empty {
                     self.blocks[i][j].isHidden = false
+                    switch board[i][j] {
+                    case RussianBlocksColors.Cyan:
+                        self.blocks[i][j].fillColor = UIColor.cyan
+                    case RussianBlocksColors.Blue:
+                        self.blocks[i][j].fillColor = UIColor.blue
+                    case RussianBlocksColors.Green:
+                        self.blocks[i][j].fillColor = UIColor.green
+                    case RussianBlocksColors.Orange:
+                        self.blocks[i][j].fillColor = UIColor.orange
+                    case RussianBlocksColors.Purple:
+                        self.blocks[i][j].fillColor = UIColor.purple
+                    case RussianBlocksColors.Red:
+                        self.blocks[i][j].fillColor = UIColor.red
+                    case RussianBlocksColors.Yellow:
+                        self.blocks[i][j].fillColor = UIColor.yellow
+                    default:
+                        self.blocks[i][j].fillColor = UIColor.black
+                    }
                 } else {
                     self.blocks[i][j].isHidden = true
                 }

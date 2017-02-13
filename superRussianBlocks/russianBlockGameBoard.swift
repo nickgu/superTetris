@@ -9,40 +9,62 @@
 import Foundation
 
 enum RussianBlocksStatus : Int {
-    case Going, Death, AllCleaned
+    case Going, Death, Pause
+}
+
+enum RussianBlocksColors : Int {
+    case Empty=0, Red, Orange, Purple, Blue, Green, Cyan, Yellow
 }
 
 class RussianBlocksCreator {
-    var random_blocks : [[(x: Int, y: Int)]] = []
+    var blockTypes : [[(x: Int, y: Int)]] = []
+    var blockColors : [RussianBlocksColors] = []
     
     init() {
+        // I
+        blockTypes.append([(0, 0), (-1, 0), (-2, 0), (-3, 0)])
+        blockColors.append(RussianBlocksColors.Cyan)
+        // J
+        blockTypes.append([(0, 1), (-1, 1), (-2, 1), (-2, 0)])
+        blockColors.append(RussianBlocksColors.Blue)
         // L
-        random_blocks.append([(-1, 0), (-1, 1), (-2, 1), (-3, 1)])
-        // o
-        random_blocks.append([(0, 0), (0, 1), (-1, 0), (-1, 1)])
-        // |
-        random_blocks.append([(0, 0), (-1, 0), (-2, 0), (-3, 0)])
-        // .|.
-        random_blocks.append([(0, 0), (-1, 0), (-1, -1), (-1, 1)])
-        // s
-        random_blocks.append([(0, 0), (0, 1), (-1, 1), (-1, 2)])
+        blockTypes.append([(0, 0), (-1, 0), (-2, 0), (-2, 1)])
+        blockColors.append(RussianBlocksColors.Orange)
+        // O
+        blockTypes.append([(0, 0), (0, 1), (-1, 0), (-1, 1)])
+        blockColors.append(RussianBlocksColors.Yellow)
+        // S
+        blockTypes.append([(0, 0), (0, 1), (-1, -1), (-1, 0)])
+        blockColors.append(RussianBlocksColors.Green)
+        // T
+        blockTypes.append([(0, -1), (0, 0), (0, 1), (-1, 0)])
+        blockColors.append(RussianBlocksColors.Purple)
+        // Z
+        blockTypes.append([(0, -1), (0, 0), (-1, 0), (-1, 1)])
+        blockColors.append(RussianBlocksColors.Red)
     }
     
     
-    func create(board: inout [[Int]], movingBlocks: inout [(x: Int, y: Int)]) -> Bool {
+    func create(
+        board: inout [[RussianBlocksColors]],
+        movingBlocks: inout [(x: Int, y: Int)],
+        movingColor: inout RussianBlocksColors
+        ) -> Bool
+    {
         let height = board.count - 1
         let width = board[0].count
         let mid = width / 2
         
-        let id = Int(arc4random()) % self.random_blocks.count
+        let id = Int(arc4random()) % self.blockTypes.count
+        movingColor = blockColors[id]
         
-        for pos in self.random_blocks[id] {
+        for pos in self.blockTypes[id] {
             // insert the same blocks for debug
-            if (board[height + pos.x][mid + pos.y] == 1) {
+            if (board[height + pos.x][mid + pos.y] != RussianBlocksColors.Empty) {
                 // cannot insert.
                 return false
             }
-            board[height + pos.x][mid + pos.y] = 1
+            board[height + pos.x][mid + pos.y] = movingColor
             movingBlocks.append( (x:height + pos.x, y:mid + pos.y) )
         }
         return true;
@@ -50,13 +72,15 @@ class RussianBlocksCreator {
 }
 
 class RussianBlockGameBoard {
-    var board: [[Int]]
+    var board: [[RussianBlocksColors]]
     var speed: Float // how many steps per seconds.
     var height: Int
     var width: Int
     var score: Int
     var creator: RussianBlocksCreator
     var movingBlocks: [(x: Int, y: Int)]
+    var movingColor : RussianBlocksColors
+    var pause : Bool
     
     init(width: Int, height: Int, speed: Float=1.0) {
         self.creator = RussianBlocksCreator()
@@ -66,10 +90,13 @@ class RussianBlockGameBoard {
         self.speed = speed
         self.board = []
         self.movingBlocks = []
+        self.movingColor = RussianBlocksColors.Red
+        self.pause = false
+        
         for _ in 0..<height {
-            var m:[Int] = []
+            var m:[RussianBlocksColors] = []
             for _ in 0..<width {
-                m.append(0)
+                m.append(RussianBlocksColors.Empty)
             }
             self.board.append(m)
         }
@@ -80,6 +107,10 @@ class RussianBlockGameBoard {
         KilledLines : Int,
         TotalCount : Int)
     {
+        if self.pause {
+            return (Status: RussianBlocksStatus.Pause, 0, 0)
+        }
+        
         // one step ahead.
         // ignore height 0
         var moving = true
@@ -87,7 +118,7 @@ class RussianBlockGameBoard {
             moving = false
         } else {
             for pos in self.movingBlocks {
-                if pos.x-1==0 || self.board[pos.x-1][pos.y]>0 {
+                if pos.x-1==0 || self.board[pos.x-1][pos.y] != RussianBlocksColors.Empty {
                     if !self.movingBlocks.contains(where: {x, y in
                         return (x==pos.x-1 && y==pos.y) })
                     {
@@ -114,7 +145,11 @@ class RussianBlockGameBoard {
         
         if !moving {
             // create new blocks
-            let can_insert = self.creator.create(board: &self.board, movingBlocks: &self.movingBlocks)
+            let can_insert = self.creator.create(
+                board: &self.board,
+                movingBlocks: &self.movingBlocks,
+                movingColor: &self.movingColor
+            )
             if !can_insert {
                 status = RussianBlocksStatus.Death
             }
@@ -124,7 +159,7 @@ class RussianBlockGameBoard {
                 var killed = true
                 var line_count = 0
                 for j in 0..<self.width {
-                    if self.board[i][j] == 0 {
+                    if self.board[i][j] == RussianBlocksColors.Empty {
                         killed = false
                     } else {
                         line_count += 1
@@ -143,10 +178,6 @@ class RussianBlockGameBoard {
         }
         
         self.score += killed_lines.count * killed_lines.count
-        
-        if blocks_count == 0 {
-            status = RussianBlocksStatus.AllCleaned
-        }
         
         return (status, killed_lines.count, blocks_count)
     }
@@ -173,6 +204,10 @@ class RussianBlockGameBoard {
             self.movingBlocks = tempMoving
         }
         self.redrawMovingBlocks()
+    }
+    
+    func togglePause() {
+        self.pause = !self.pause
     }
     
     func rotate() {
@@ -213,20 +248,20 @@ class RussianBlockGameBoard {
     
     private func clearMovingBlocks() {
         for pos in self.movingBlocks {
-            self.board[pos.x][pos.y] = 0
+            self.board[pos.x][pos.y] = RussianBlocksColors.Empty
         }
     }
     
     private func redrawMovingBlocks() {
         for pos in self.movingBlocks {
-            self.board[pos.x][pos.y] = 1
+            self.board[pos.x][pos.y] = self.movingColor
         }
     }
     
     private func killLine(_ line_id: Int) {
         self.clearMovingBlocks()
         for i in 0..<self.width {
-            self.board[line_id][i] = 0
+            self.board[line_id][i] = RussianBlocksColors.Empty
         }
         for l in line_id..<self.height-1 {
             for i in 0..<self.width {
@@ -242,7 +277,7 @@ class RussianBlockGameBoard {
                 && pos.x < self.height
                 && pos.y >= 0
                 && pos.y < self.width
-                && self.board[pos.x][pos.y] == 0
+                && self.board[pos.x][pos.y] == RussianBlocksColors.Empty
             )
             {
                 return false
